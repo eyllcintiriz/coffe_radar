@@ -1,34 +1,7 @@
-import time
 import streamlit as st
 import sqlite3
-
-# Favori kafeyi veritabanina ekle
-def add_favorite_cafe(user_id, cafe_name):
-    if not is_cafe_in_favorites(user_id, cafe_name):  # Favorilerde değilse ekle
-        conn = sqlite3.connect("users.db")
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO favorite_cafes (user_id, cafe_name) VALUES (?, ?)", (user_id, cafe_name))
-        conn.commit()
-        conn.close()
-        st.info(f"{cafe_name} favorilere eklendi!")
-
-# Kullanıcının favorilerinde olup olmadığını kontrol et
-def is_cafe_in_favorites(user_id, cafe_name):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM favorite_cafes WHERE user_id = ? AND cafe_name = ?", (user_id, cafe_name))
-    result = cursor.fetchone()
-    conn.close()
-    return result is not None
-
-# Kullanıcı ID'sini al
-def get_user_id(username):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
-    user_id = cursor.fetchone()
-    conn.close()
-    return user_id[0] if user_id else None
+import time
+from db_helpers import get_user_id, add_favorite_cafe, is_cafe_in_favorites
 
 # Kafeler listesini getir
 def get_cafes():
@@ -50,20 +23,13 @@ def get_cafe_details(cafe_name):
 
 # Ana sayfa
 def main_page():
-    # Büyük karşılama mesajı
     st.markdown(f"<h1 style='text-align: center;'>Merhaba, {st.session_state['username']}! ☺️</h1>", unsafe_allow_html=True)
     
-    # Başlık
     st.title("Kafeler")
     
-    # Kafeler Listesi
     cafes = get_cafes()
     user_id = get_user_id(st.session_state["username"])
     
-
-    # image api üzerinden çekilecek ve kafeler listesine eklenecek!!!
-    #kafeler listesi init_db.py de var
-    # DAHA YAPILMADI
     if cafes:
         for cafe in cafes:
             col1, col2, col3 = st.columns([1, 3, 1])
@@ -72,15 +38,17 @@ def main_page():
             with col2:
                 st.subheader(cafe)
             with col3:
-                if not is_cafe_in_favorites(user_id, cafe):  # Favorilerde değilse göster
+                if not is_cafe_in_favorites(user_id, cafe):
                     if st.button(f"Favorilere Ekle: {cafe}", key=f"add_{cafe}"):
                         add_favorite_cafe(user_id, cafe)
+                        st.success(f"{cafe} favorilere eklendi!")
+                        time.sleep(2)
+                        st.rerun()
                 else:
                     st.caption("Zaten favorilerde")
     else:
         st.info("Kafeler yükleniyor...")
     
-    # İnceleme Bölümü
     st.subheader("Kafeleri İncele")
     if cafes:
         selected_cafe = st.selectbox("Bir kafe seçin", cafes)
@@ -90,32 +58,3 @@ def main_page():
                 st.write(f"**Kafe Adı**: {selected_cafe}")
                 st.write(f"**Konum**: {details[0]}")
                 st.write(f"**Özellikler**: {details[1]}")
-
-# login_page.py
-import streamlit as st
-import sqlite3
-
-# Kullanıcı doğrulama
-def authenticate(username, password):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
-    user = cursor.fetchone()
-    conn.close()
-    return user
-
-# Giriş ekranı
-def login_page():
-    st.title("Giriş Yap")
-    username = st.text_input("Kullanıcı Adı")
-    password = st.text_input("Şifre", type="password")
-    if st.button("Giriş Yap"):
-        user = authenticate(username, password)
-        if user:
-            st.session_state["logged_in"] = True
-            st.session_state["username"] = username
-            st.success(f"Merhaba, {username}! Yönlendiriliyorsunuz...")
-            time.sleep(3)
-            st.rerun()  # Force rerun to update UI
-        else:
-            st.error("Kullanıcı adı veya şifre hatalı!")

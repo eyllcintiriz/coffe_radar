@@ -34,7 +34,6 @@ def init_db():
     """)
     
     # Örnek kafeler ekleme
-    #apiden çekilen veriler ile oluşturulacak ????
     cafes = [
         ("Cafe Latte", "Ankara, Turkey", "WiFi, Outdoor Seating"),
         ("Espresso House", "Istanbul, Turkey", "Pet Friendly, Vegan Options"),
