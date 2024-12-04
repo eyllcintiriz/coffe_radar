@@ -34,12 +34,13 @@ def init_db():
         pass  # `address` sütunu zaten varsa hata vermez
 
     
-    # Favori kafeler tablosu
+    # Favori kafeler tablosu, cafe_id Yelp API'den geliyor, cafe_details ise JSON formatındaki detaylar
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS favorite_cafes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
-            cafe_name TEXT,
+            cafe_id TEXT,
+            cafe_details TEXT,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
@@ -51,6 +52,17 @@ def init_db():
             name TEXT UNIQUE,
             location TEXT,
             features TEXT
+        )
+    """)
+    
+		# Geri bildirim tablosu
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            feedback_text TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
     
