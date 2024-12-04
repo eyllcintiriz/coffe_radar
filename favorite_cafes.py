@@ -17,9 +17,29 @@ def remove_favorite_cafe(user_id, cafe_name):
     cursor.execute("DELETE FROM favorite_cafes WHERE user_id = ? AND cafe_name = ?", (user_id, cafe_name))
     conn.commit()
     conn.close()
-    st.session_state["page"] = "favorite_cafes"  # Sayfayı güncellemek için durumu değiştir
     st.session_state["update"] = not st.session_state.get("update", False)  # Durum tetikleyicisi
     st.info(f"{cafe_name} favorilerden çıkarıldı!")
+    st.rerun()  # Force rerun to update UI
+
+# Favori kafeyi veritabanina ekle
+def add_favorite_cafe(user_id, cafe_name):
+    if not is_cafe_in_favorites(user_id, cafe_name):  # Favorilerde değilse ekle
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO favorite_cafes (user_id, cafe_name) VALUES (?, ?)", (user_id, cafe_name))
+        conn.commit()
+        conn.close()
+        st.info(f"{cafe_name} favorilere eklendi!")
+        st.rerun()  # Force rerun to update UI
+
+# Kullanıcının favorilerinde olup olmadığını kontrol et
+def is_cafe_in_favorites(user_id, cafe_name):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM favorite_cafes WHERE user_id = ? AND cafe_name = ?", (user_id, cafe_name))
+    result = cursor.fetchone()
+    conn.close()
+    return result is not None
 
 # Kullanıcı ID'sini al
 def get_user_id(username):
