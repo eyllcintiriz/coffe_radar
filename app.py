@@ -4,11 +4,11 @@ from main_page import main_page
 from favorite_cafes import favorite_cafes_page
 from register_page import register_page
 
-# Oturum durumunu kısmı
+# Oturum durumu
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 if "page" not in st.session_state:
-    st.session_state["page"] = "main"
+    st.session_state["page"] = "Ana Sayfa"
 
 # Sidebar sayfa geçişleri
 if st.session_state["logged_in"]:
@@ -16,51 +16,26 @@ if st.session_state["logged_in"]:
     page = st.sidebar.radio(
         "Geçiş Yap:",
         options=["Ana Sayfa", "Favori Kafeler"],
-        index=0 if st.session_state["page"] == "main" else
-              1 if st.session_state["page"] == "favorite_cafes" else 0,
+        index=0 if st.session_state["page"] == "Ana Sayfa" else 1,
     )
     st.session_state["page"] = page
 
     if st.sidebar.button("Çıkış Yap"):
         st.session_state["logged_in"] = False
-        st.session_state["page"] = "main"
-        st.rerun()  # Force rerun to update UI
+        st.session_state["page"] = "Ana Sayfa"
+        st.rerun()  # UI'yı güncellemek için yeniden çalıştır
 
     # Seçime göre sayfa çağırma
     if st.session_state["page"] == "Ana Sayfa":
         main_page()
     elif st.session_state["page"] == "Favori Kafeler":
         favorite_cafes_page()
-
 else:
-    auth_option = st.sidebar.radio("Seçiminizi Yapın", ["Giriş Yap", "Kayıt Ol"])
+    auth_options = ["Giriş Yap", "Kayıt Ol"]
+    default_index = auth_options.index(st.session_state.get("auth_option", "Giriş Yap"))
+    auth_option = st.sidebar.radio("Seçiminizi Yapın", auth_options, index=default_index)
+    st.session_state["auth_option"] = auth_option
     if auth_option == "Giriş Yap":
         login_page()
     else:
         register_page()
-
-# register_page.py
-import streamlit as st
-import sqlite3
-
-def register_page():
-    st.title("Kayıt Ol")
-    username = st.text_input("Kullanıcı Adı")
-    password = st.text_input("Şifre", type="password")
-    confirm_password = st.text_input("Şifreyi Onayla", type="password")
-    
-    if st.button("Kayıt Ol"):
-        if password != confirm_password:
-            st.error("Şifreler eşleşmiyor!")
-        elif not username or not password:
-            st.error("Kullanıcı adı ve şifre gerekli!")
-        else:
-            try:
-                conn = sqlite3.connect("users.db")
-                cursor = conn.cursor()
-                cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-                conn.commit()
-                conn.close()
-                st.success("Kayıt başarılı! Giriş yapabilirsiniz.")
-            except sqlite3.IntegrityError:
-                st.error("Bu kullanıcı adı zaten alınmış!")
