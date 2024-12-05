@@ -5,6 +5,10 @@ from favorite_cafes import favorite_cafes_page
 from register_page import register_page
 from admin_page import admin_page
 
+
+# set the oage config to wide
+st.set_page_config(layout="wide")
+
 # Oturum durumu
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False

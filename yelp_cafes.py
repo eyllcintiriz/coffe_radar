@@ -62,62 +62,86 @@ def display_cafes_on_map(latitude, longitude, location_name="your location"):
             if st.session_state['show_all_cafes']:
                 cafes_to_display = cafes
             else:
-                cafes_to_display = cafes[:3]
+                cafes_to_display = cafes[:2]
 
-            for cafe in cafes_to_display:
-                st.markdown(f"**{cafe['name']}**")
-                st.write(f"Rating: {cafe.get('rating', 'N/A')} ⭐")
-                st.write(f"Address: {', '.join(cafe['location']['display_address'])}")
+            for idx, cafe in enumerate(cafes_to_display):
+                # Cafe Name
+                st.markdown(f"<h4 style='margin-bottom:5px;'>{cafe['name']}</h4>", unsafe_allow_html=True)
+
+                # Compact Cafe Details
+                cafe_details = f"{cafe.get('rating', 'N/A')} ⭐ | {', '.join(cafe['location']['display_address'])}"
+                st.write(cafe_details)
 
                 user_id = get_user_id(st.session_state["username"])
-                if not is_cafe_in_favorites(user_id, cafe['name']):
-                    if st.button(f"Add to Favorites: {cafe['name']}", key=f"add_{cafe['name']}"):
-                        add_favorite_cafe(user_id, cafe['name'])
-                        st.success(f"{cafe['name']} added to favorites!")
-                else:
-                    st.caption("Already in favorites")
-                
-                st.write("---")
 
-                # Review Section
-                st.subheader("Reviews")
-                reviews = get_reviews(cafe['name'])
-                for review, rating, username in reviews:
-                    st.write(f"**{username}**")
-                    st.write(f"Rating: {rating} ⭐")
-                    st.write(f"Review: {review}")
-                    if st.button(f"Report Review by {username}", key=f"report_review_{username}_{cafe['name']}"):
-                        reason = st.text_area("Reason for reporting", key=f"reason_{username}_{cafe['name']}")
-                        if st.button(f"Submit Report: {username}", key=f"submit_report_{username}_{cafe['name']}"):
-                            add_report(user_id, "review", review_id, reason)
-                            st.success("Report submitted!")
-                            st.rerun()
-                    st.write("---")
+                # Compact Buttons in a Single Row
+                cols = st.columns([1, 1, 1, 4])
 
-                st.subheader("Write a Review")
-                review_text = st.text_area("Your Review", key=f"review_{cafe['name']}")
-                rating = st.slider("Rating", 1, 5, key=f"rating_{cafe['name']}")
-                if st.button(f"Submit Review: {cafe['name']}", key=f"submit_{cafe['name']}"):
-                    success, message = add_review(user_id, cafe['name'], review_text, rating)
-                    if success:
-                        st.success(message)
-                        st.rerun()
+                with cols[0]:
+                    if not is_cafe_in_favorites(user_id, cafe['name']):
+                        if st.button("❤️", key=f"fav_{idx}"):
+                            add_favorite_cafe(user_id, cafe['name'])
+                            st.success("Added to favorites!")
                     else:
-                        st.error(message)
+                        st.write("❤️")
 
-                if st.button(f"Report Cafe: {cafe['name']}", key=f"report_cafe_{cafe['name']}"):
-                    reason = st.text_area("Reason for reporting", key=f"reason_cafe_{cafe['name']}")
-                    if st.button(f"Submit Report: {cafe['name']}", key=f"submit_report_cafe_{cafe['name']}"):
-                        add_report(user_id, "cafe", cafe_id, reason)
-                        st.success("Report submitted!")
-                        st.rerun()
+                with cols[1]:
+                    if st.button("✍️", key=f"review_{idx}"):
+                        st.session_state[f"show_review_form_{idx}"] = not st.session_state.get(f"show_review_form_{idx}", False)
 
+                with cols[2]:
+                    if st.button("🚩", key=f"report_{idx}"):
+                        st.session_state[f"show_report_form_{idx}"] = not st.session_state.get(f"show_report_form_{idx}", False)
+
+                with cols[3]:
+                    pass  # Placeholder for alignment
+
+                # Show Review Form if Toggled
+                if st.session_state.get(f"show_review_form_{idx}", False):
+                    with st.form(key=f"review_form_{idx}"):
+                        review_text_input = st.text_area("Your Review", key=f"review_text_{idx}")
+                        rating_input = st.slider("Rating", 1, 5, 3, key=f"rating_slider_{idx}")
+                        submit_review = st.form_submit_button("Submit")
+                        if submit_review:
+                            success, message = add_review(user_id, cafe['name'], review_text_input, rating_input)
+                            if success:
+                                st.success(message)
+                                st.rerun()
+                            else:
+                                st.error(message)
+
+                # Show Report Form if Toggled
+                if st.session_state.get(f"show_report_form_{idx}", False):
+                    with st.form(key=f"report_form_{idx}"):
+                        reason = st.text_area("Reason for reporting", key=f"report_reason_{idx}")
+                        submit_report = st.form_submit_button("Submit Report")
+                        if submit_report:
+                            user_id = get_user_id(st.session_state["username"])
+                            add_report(user_id, cafe['name'], reason)
+                            st.success("Report submitted successfully.")
+                            st.session_state[f"show_report_form_{idx}"] = False
+
+                # Display Reviews Compactly
+                reviews = get_reviews(cafe['name'])
+                if reviews:
+                    st.write(f"✨ Reviews ({len(reviews)}):")
+                    for review_text, rating_value, reviewer_username in reviews[:1]:  # Show only first review
+                        st.write(f"- {rating_value}⭐ {reviewer_username}: {review_text}")
+                else:
+                    st.write("No reviews yet.")
+
+                # Divider with reduced margin
+                st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
+
+            # Show More/Less Button
             if not st.session_state['show_all_cafes']:
                 if st.button("Show More"):
                     st.session_state['show_all_cafes'] = True
+                    st.rerun()
             else:
                 if st.button("Show Less"):
                     st.session_state['show_all_cafes'] = False
+                    st.rerun()
 
         with col1:
             # Create a layer to display the cafes

@@ -43,3 +43,29 @@ def admin_page():
             st.success(f"Report {report_id} removed successfully!")
             st.rerun()
         st.write("---")
+
+        # Section for managing reports
+    st.subheader("Manage Reports")
+    reports = get_reports()
+    for report in reports:
+        report_id, username, cafe_name, reason, timestamp = report
+        st.write(f"**Report ID**: {report_id}")
+        st.write(f"**Reported by**: {username}")
+        st.write(f"**Cafe**: {cafe_name}")
+        st.write(f"**Reason**: {reason}")
+        st.write(f"**Timestamp**: {timestamp}")
+
+        cols = st.columns([1, 1])
+        with cols[0]:
+            if st.button("Dismiss Report", key=f"dismiss_{report_id}"):
+                remove_report(report_id)
+                st.success(f"Report {report_id} dismissed.")
+                st.experimental_rerun()
+        with cols[1]:
+            if st.button("Remove Cafe", key=f"remove_cafe_{cafe_name}_{report_id}"):
+                remove_cafe(cafe_name)
+                remove_report(report_id)
+                st.success(f"Cafe '{cafe_name}' removed.")
+                st.experimental_rerun()
+
+        st.markdown("---")

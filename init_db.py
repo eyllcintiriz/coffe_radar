@@ -50,10 +50,11 @@ def init_db():
         CREATE TABLE IF NOT EXISTS reports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
-            content_type TEXT,
-            content_id INTEGER,
+            cafe_name TEXT,
             reason TEXT,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (cafe_name) REFERENCES cafes (name)
         )
     """)
     

@@ -122,15 +122,22 @@ def remove_review(username, cafe_name):
 def remove_cafe(cafe_name):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
+    # Remove cafe
     cursor.execute("DELETE FROM cafes WHERE name = ?", (cafe_name,))
+    # Remove related reviews
+    cursor.execute("DELETE FROM reviews WHERE cafe_name = ?", (cafe_name,))
+    # Remove from favorites
+    cursor.execute("DELETE FROM favorite_cafes WHERE cafe_name = ?", (cafe_name,))
+    # Remove reports related to the cafe
+    cursor.execute("DELETE FROM reports WHERE cafe_name = ?", (cafe_name,))
     conn.commit()
     conn.close()
 
-def add_report(user_id, content_type, content_id, reason):
+def add_report(user_id, cafe_name, reason):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO reports (user_id, content_type, content_id, reason) VALUES (?, ?, ?, ?)", 
-                   (user_id, content_type, content_id, reason))
+    cursor.execute("INSERT INTO reports (user_id, cafe_name, reason) VALUES (?, ?, ?)",
+                   (user_id, cafe_name, reason))
     conn.commit()
     conn.close()
 
@@ -138,7 +145,7 @@ def get_reports():
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT reports.id, users.username, reports.content_type, reports.content_id, reports.reason
+        SELECT reports.id, users.username, reports.cafe_name, reports.reason, reports.timestamp
         FROM reports
         JOIN users ON reports.user_id = users.id
     """)
