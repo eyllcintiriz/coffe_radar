@@ -33,6 +33,31 @@ def init_db():
         )
     """)
     
+    # Reviews table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            cafe_name TEXT,
+            review TEXT,
+            rating INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    """)
+    
+    # Reports table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            cafe_name TEXT,
+            reason TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (cafe_name) REFERENCES cafes (name)
+        )
+    """)
+    
     # Örnek kafeler ekleme
     cafes = [
         ("Cafe Latte", "Ankara, Turkey", "WiFi, Outdoor Seating"),

@@ -77,3 +77,85 @@ def remove_favorite_cafe(user_id, cafe_name):
     cursor.execute("DELETE FROM favorite_cafes WHERE user_id = ? AND cafe_name = ?", (user_id, cafe_name))
     conn.commit()
     conn.close()
+
+def add_review(user_id, cafe_name, review, rating):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    
+    # Check if the user has already reviewed this cafe
+    cursor.execute("SELECT 1 FROM reviews WHERE user_id = ? AND cafe_name = ?", (user_id, cafe_name))
+    existing_review = cursor.fetchone()
+    
+    if existing_review:
+        conn.close()
+        return False, "You have already reviewed this cafe."
+    
+    cursor.execute("INSERT INTO reviews (user_id, cafe_name, review, rating) VALUES (?, ?, ?, ?)", 
+                   (user_id, cafe_name, review, rating))
+    conn.commit()
+    conn.close()
+    return True, "Review submitted successfully."
+
+def get_reviews(cafe_name):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT reviews.review, reviews.rating, users.username
+        FROM reviews
+        JOIN users ON reviews.user_id = users.id
+        WHERE reviews.cafe_name = ?
+    """, (cafe_name,))
+    reviews = cursor.fetchall()
+    conn.close()
+    return reviews
+
+def remove_review(username, cafe_name):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        DELETE FROM reviews
+        WHERE user_id = (SELECT id FROM users WHERE username = ?) AND cafe_name = ?
+    """, (username, cafe_name))
+    conn.commit()
+    conn.close()
+
+def remove_cafe(cafe_name):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    # Remove cafe
+    cursor.execute("DELETE FROM cafes WHERE name = ?", (cafe_name,))
+    # Remove related reviews
+    cursor.execute("DELETE FROM reviews WHERE cafe_name = ?", (cafe_name,))
+    # Remove from favorites
+    cursor.execute("DELETE FROM favorite_cafes WHERE cafe_name = ?", (cafe_name,))
+    # Remove reports related to the cafe
+    cursor.execute("DELETE FROM reports WHERE cafe_name = ?", (cafe_name,))
+    conn.commit()
+    conn.close()
+
+def add_report(user_id, cafe_name, reason):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO reports (user_id, cafe_name, reason) VALUES (?, ?, ?)",
+                   (user_id, cafe_name, reason))
+    conn.commit()
+    conn.close()
+
+def get_reports():
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT reports.id, users.username, reports.cafe_name, reports.reason, reports.timestamp
+        FROM reports
+        JOIN users ON reports.user_id = users.id
+    """)
+    reports = cursor.fetchall()
+    conn.close()
+    return reports
+
+def remove_report(report_id):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM reports WHERE id = ?", (report_id,))
+    conn.commit()
+    conn.close()
