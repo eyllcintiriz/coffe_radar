@@ -9,7 +9,11 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
-            password TEXT
+            password TEXT,
+            email TEXT,
+						phone TEXT,
+						address TEXT,
+						role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin'))
         )
     """)
     
@@ -59,73 +63,11 @@ def init_db():
         )
     """)
     
-  
-    
-    
-    # Örnek kafeler ekleme
-    cafes = [
-        ("Cafe Latte", "Ankara, Turkey", "WiFi, Outdoor Seating"),
-        ("Espresso House", "Istanbul, Turkey", "Pet Friendly, Vegan Options"),
-        ("Brewed Awakening", "Izmir, Turkey", "Cozy Atmosphere, Specialty Coffee"),
-    ]
-    for cafe in cafes:
-        try:
-            cursor.execute("INSERT INTO cafes (name, location, features) VALUES (?, ?, ?)", cafe)
-        except sqlite3.IntegrityError:
-            pass  # Eğer kafe zaten varsa hata vermesin!
-    
-    conn.commit()
-    conn.close()
-
-
-def init_db():
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    
-    # Kullanıcı tablosunu oluştur veya güncelle
+		# add a default admin user
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT,
-            email TEXT,
-            phone TEXT,
-            address TEXT
-        )
+        INSERT INTO users (username, password, role)
+				VALUES ('admin', 'admin', 'admin')
     """)
-
-    # Tabloya `email` sütununu ekle (varsa atla)
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN email TEXT")
-    except sqlite3.OperationalError:
-        pass  # Sütun zaten varsa hata vermez
-
-    # Eksik sütunları ekle
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN phone TEXT")
-    except sqlite3.OperationalError:
-        pass  # `phone` sütunu zaten varsa hata vermez
-    
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN address TEXT")
-    except sqlite3.OperationalError:
-        pass  # `address` sütunu zaten varsa hata vermez
-
-    
-    # Favori kafeler tablosu, cafe_id Yelp API'den geliyor, cafe_details ise JSON formatındaki detaylar
-    
-    
-    # Örnek kafeler ekleme
-    cafes = [
-        ("Cafe Latte", "Ankara, Turkey", "WiFi, Outdoor Seating"),
-        ("Espresso House", "Istanbul, Turkey", "Pet Friendly, Vegan Options"),
-        ("Brewed Awakening", "Izmir, Turkey", "Cozy Atmosphere, Specialty Coffee"),
-    ]
-    for cafe in cafes:
-        try:
-            cursor.execute("INSERT INTO cafes (name, location, features) VALUES (?, ?, ?)", cafe)
-        except sqlite3.IntegrityError:
-            pass  # Eğer kafe zaten varsa hata vermesin!
     
     conn.commit()
     conn.close()

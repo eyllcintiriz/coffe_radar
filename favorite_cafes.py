@@ -1,4 +1,5 @@
 # favorite_cafes.py
+import time
 import streamlit as st
 from db_helpers import get_user_id, get_favorite_cafes, remove_favorite_cafe
 import json
@@ -19,6 +20,7 @@ def favorite_cafes_page():
                 if st.button("🗑️", key=f"remove_{idx}"):
                     remove_favorite_cafe(user_id, cafe_json['id'])
                     st.success(f"Removed {cafe_json['name']} from favorites!")
+                    time.sleep(2)
                     st.rerun()
 
             with col2:

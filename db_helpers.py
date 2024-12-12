@@ -139,35 +139,36 @@ def get_cafe_details(cafe_name):
     return details
 
 # Favori kafelerle ilgili fonksiyonlar
-def is_cafe_in_favorites(user_id, cafe_name):
+def is_cafe_in_favorites(user_id, cafe_id):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM favorite_cafes WHERE user_id = ? AND cafe_name = ?", (user_id, cafe_name))
+    cursor.execute("SELECT 1 FROM favorite_cafes WHERE user_id = ? AND cafe_id = ?", (user_id, cafe_id))
     result = cursor.fetchone()
     conn.close()
     return result is not None
 
-def add_favorite_cafe(user_id, cafe_name):
+def add_favorite_cafe(user_id, cafe_id, cafe_details):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO favorite_cafes (user_id, cafe_name) VALUES (?, ?)", (user_id, cafe_name))
+    cursor.execute("INSERT INTO favorite_cafes (user_id, cafe_id, cafe_details) VALUES (?, ?, ?)", (user_id, cafe_id, cafe_details))
     conn.commit()
     conn.close()
 
 def get_favorite_cafes(user_id):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT cafe_name FROM favorite_cafes WHERE user_id = ?", (user_id,))
+    cursor.execute("SELECT cafe_id FROM favorite_cafes WHERE user_id = ?", (user_id,))
     cafes = cursor.fetchall()
     conn.close()
     return [cafe[0] for cafe in cafes]
 
-def remove_favorite_cafe(user_id, cafe_name):
+def remove_favorite_cafe(user_id, cafe_id):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM favorite_cafes WHERE user_id = ? AND cafe_name = ?", (user_id, cafe_name))
+    cursor.execute("DELETE FROM favorite_cafes WHERE user_id = ? AND cafe_id = ?", (user_id, cafe_id))
     conn.commit()
     conn.close()
+    return True
 
 def add_review(user_id, cafe_name, review, rating):
     conn = sqlite3.connect("users.db")
@@ -250,3 +251,25 @@ def remove_report(report_id):
     cursor.execute("DELETE FROM reports WHERE id = ?", (report_id,))
     conn.commit()
     conn.close()
+    
+# calculate combined ratings from yelp and db users and return rating and reviews count
+def calculate_rating(yelp_cafe_rating, yelp_cafe_rating_count, cafe_name):
+		conn = sqlite3.connect("users.db")
+		cursor = conn.cursor()
+		cursor.execute("SELECT AVG(rating), COUNT(*) FROM reviews WHERE cafe_name = ?", (cafe_name,))
+		db_rating, db_rating_count = cursor.fetchone()
+		conn.close()
+		
+		if db_rating is None:
+				return yelp_cafe_rating, yelp_cafe_rating_count
+		else:
+				combined_rating = (yelp_cafe_rating * yelp_cafe_rating_count + db_rating * db_rating_count) / (yelp_cafe_rating_count + db_rating_count)
+				return round(combined_rating, 1), yelp_cafe_rating_count + db_rating_count
+          
+def get_user_role(user_id):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT role FROM users WHERE id=?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else "user"

@@ -4,9 +4,11 @@ from login_page import login_page
 from main_page import main_page
 from favorite_cafes import favorite_cafes_page
 from register_page import register_page
-from profile_1 import profile_page
+from profile_helpers import profile_page
 from cafe_details import cafe_details_page
-from feedback_page import feedback_page  # Import the feedback page
+from feedback_page import feedback_page
+from admin_page import admin_page
+from db_helpers import get_user_id, get_user_role
 
 # Initialize session state
 if "logged_in" not in st.session_state:
@@ -17,9 +19,15 @@ if "page" not in st.session_state:
 # Page navigation
 if st.session_state["logged_in"]:
     st.sidebar.title("Sayfalar")
+    
+    user_id = get_user_id(st.session_state["username"])
+    user_role = get_user_role(user_id)
 
     # Define the pages that should appear in the sidebar
     sidebar_pages = ["Ana Sayfa", "Favori Kafeler", "Profil", "Geri Bildirim Gönderin"]
+    
+    if user_role == "admin":
+        sidebar_pages.append("Yönetici Sayfası")
 
     # Use a separate variable for the sidebar selection
     sidebar_selection = st.sidebar.radio(
@@ -35,7 +43,7 @@ if st.session_state["logged_in"]:
     if st.sidebar.button("Çıkış Yap"):
         st.session_state["logged_in"] = False
         st.session_state["page"] = "Ana Sayfa"
-        st.experimental_rerun()
+        st.rerun()
 
     # Only change the main page if the sidebar selection is different and we're not on an internal page
     if st.session_state["page"] in sidebar_pages or st.session_state["page"] == st.session_state.get("previous_page", ""):
@@ -53,10 +61,11 @@ if st.session_state["logged_in"]:
         profile_page()
     elif st.session_state["page"] == "Geri Bildirim Gönderin":
         feedback_page()
-    elif st.session_state["page"] == "Cafe Details":
+    elif st.session_state["page"] == "Kafe Detayları":
         cafe_details_page()
+    elif st.session_state["page"] == "Yönetici Sayfası":
+        admin_page()
     else:
-        # Default to main page if the page is unrecognized
         main_page()
 else:
     # Handle authentication pages
