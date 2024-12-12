@@ -1,6 +1,6 @@
+import json
 import sqlite3
 
-# Kullanıcı doğrulama
 def authenticate(username, password):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
@@ -9,7 +9,6 @@ def authenticate(username, password):
     conn.close()
     return user
 
-# Kullanıcı kaydı
 def register_user(username, password):
     try:
         conn = sqlite3.connect("users.db")
@@ -20,8 +19,29 @@ def register_user(username, password):
         return True, "Kayıt başarılı!"
     except sqlite3.IntegrityError:
         return False, "Bu kullanıcı adı zaten alınmış!"
+    
+def get_users():
+		conn = sqlite3.connect("users.db")
+		cursor = conn.cursor()
+		cursor.execute("SELECT * FROM users")
+		users = cursor.fetchall()
+		conn.close()
+		return users
 
-# Kullanıcı ID'sini al
+def promote_user(user_id):
+		conn = sqlite3.connect("users.db")
+		cursor = conn.cursor()
+		cursor.execute("UPDATE users SET role = 'admin' WHERE id = ?", (user_id,))
+		conn.commit()
+		conn.close()
+              
+def demote_user(user_id):
+		conn = sqlite3.connect("users.db")
+		cursor = conn.cursor()
+		cursor.execute("UPDATE users SET role = 'user' WHERE id = ?", (user_id,))
+		conn.commit()
+		conn.close()
+
 def get_user_id(username):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
@@ -30,38 +50,33 @@ def get_user_id(username):
     conn.close()
     return user_id[0] if user_id else None
 
-# Kafelerle ilgili fonksiyonlar
+def add_cafe(name, location, details):
+		conn = sqlite3.connect("users.db")
+		cursor = conn.cursor()
+		cursor.execute("INSERT INTO cafes (name, location, details) VALUES (?, ?, ?)", (name, location, details))
+		conn.commit()
+		conn.close()
+
 def get_cafes():
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM cafes")
+    cursor.execute("SELECT * FROM cafes")
     cafes = cursor.fetchall()
     conn.close()
-    return [cafe[0] for cafe in cafes]
+    return [json.loads(cafe[3]) for cafe in cafes]
 
-def get_cafe_details(cafe_name):
+def is_cafe_in_favorites(user_id, cafe_name):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT location, features FROM cafes WHERE name = ?", (cafe_name,))
-    details = cursor.fetchone()
-    conn.close()
-    return details
-
-# Favori kafelerle ilgili fonksiyonlar
-def is_cafe_in_favorites(user_id, cafe_id):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM favorite_cafes WHERE user_id = ? AND cafe_id = ?", (user_id, cafe_id))
+    cursor.execute("SELECT 1 FROM favorite_cafes WHERE user_id = ? AND cafe_name = ?", (user_id, cafe_name))
     result = cursor.fetchone()
     conn.close()
     return result is not None
 
-def add_favorite_cafe(user_id, cafe_id, cafe_details):
-    print(cafe_details)
-    print(cafe_id)
+def add_favorite_cafe(user_id, cafe_name, cafe_details):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO favorite_cafes (user_id, cafe_id, cafe_details) VALUES (?, ?, ?)", (user_id, cafe_id, cafe_details))
+    cursor.execute("INSERT INTO favorite_cafes (user_id, cafe_name, cafe_details) VALUES (?, ?, ?)", (user_id, cafe_name, cafe_details))
     conn.commit()
     conn.close()
 
@@ -73,102 +88,39 @@ def get_favorite_cafes(user_id):
     conn.close()
     return cafes
 
-def remove_favorite_cafe(user_id, cafe_id):
+def remove_favorite_cafe(user_id, cafe_name):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM favorite_cafes WHERE user_id = ? AND cafe_id = ?", (user_id, cafe_id))
+    cursor.execute("DELETE FROM favorite_cafes WHERE user_id = ? AND cafe_name = ?", (user_id, cafe_name))
     conn.commit()
     conn.close()
-    
+    return True
+
 def submit_feedback(user_id, feedback_text):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO feedback (user_id, feedback_text) VALUES (?, ?)",
+        "INSERT INTO feedbacks (user_id, feedback_text) VALUES (?, ?)",
         (user_id, feedback_text)
     )
     conn.commit()
     conn.close()
-import sqlite3
+    
+def get_feedbacks():
+		conn = sqlite3.connect("users.db")
+		cursor = conn.cursor()
+		cursor.execute("SELECT * FROM feedbacks")
+		feedbacks = cursor.fetchall()
+		conn.close()
+		return feedbacks
 
-# Kullanıcı doğrulama
-def authenticate(username, password):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
-    user = cursor.fetchone()
-    conn.close()
-    return user
-
-# Kullanıcı kaydı
-def register_user(username, password):
-    try:
-        conn = sqlite3.connect("users.db")
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-        conn.commit()
-        conn.close()
-        return True, "Kayıt başarılı!"
-    except sqlite3.IntegrityError:
-        return False, "Bu kullanıcı adı zaten alınmış!"
-
-# Kullanıcı ID'sini al
-def get_user_id(username):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
-    user_id = cursor.fetchone()
-    conn.close()
-    return user_id[0] if user_id else None
-
-# Kafelerle ilgili fonksiyonlar
-def get_cafes():
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM cafes")
-    cafes = cursor.fetchall()
-    conn.close()
-    return [cafe[0] for cafe in cafes]
-
-def get_cafe_details(cafe_name):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT location, features FROM cafes WHERE name = ?", (cafe_name,))
-    details = cursor.fetchone()
-    conn.close()
-    return details
-
-# Favori kafelerle ilgili fonksiyonlar
-def is_cafe_in_favorites(user_id, cafe_id):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM favorite_cafes WHERE user_id = ? AND cafe_id = ?", (user_id, cafe_id))
-    result = cursor.fetchone()
-    conn.close()
-    return result is not None
-
-def add_favorite_cafe(user_id, cafe_id, cafe_details):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO favorite_cafes (user_id, cafe_id, cafe_details) VALUES (?, ?, ?)", (user_id, cafe_id, cafe_details))
-    conn.commit()
-    conn.close()
-
-def get_favorite_cafes(user_id):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT cafe_id FROM favorite_cafes WHERE user_id = ?", (user_id,))
-    cafes = cursor.fetchall()
-    conn.close()
-    return [cafe[0] for cafe in cafes]
-
-def remove_favorite_cafe(user_id, cafe_id):
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM favorite_cafes WHERE user_id = ? AND cafe_id = ?", (user_id, cafe_id))
-    conn.commit()
-    conn.close()
-    return True
+def remove_feedback(feedback_id):
+		conn = sqlite3.connect("users.db")
+		cursor = conn.cursor()
+		cursor.execute("DELETE FROM feedbacks WHERE id = ?", (feedback_id,))
+		conn.commit()
+		conn.close()
+              
 
 def add_review(user_id, cafe_name, review, rating):
     conn = sqlite3.connect("users.db")
@@ -205,6 +157,14 @@ def get_reviews(cafe_name):
     conn.close()
     return reviews
 
+def get_user_reviews(user_id):
+		conn = sqlite3.connect("users.db")
+		cursor = conn.cursor()
+		cursor.execute("SELECT cafe_name, review, rating FROM reviews WHERE user_id = ?", (user_id,))
+		reviews = cursor.fetchall()
+		conn.close()
+		return reviews
+
 def remove_review(username, cafe_name):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
@@ -218,13 +178,9 @@ def remove_review(username, cafe_name):
 def remove_cafe(cafe_name):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    # Remove cafe
     cursor.execute("DELETE FROM cafes WHERE name = ?", (cafe_name,))
-    # Remove related reviews
     cursor.execute("DELETE FROM reviews WHERE cafe_name = ?", (cafe_name,))
-    # Remove from favorites
     cursor.execute("DELETE FROM favorite_cafes WHERE cafe_name = ?", (cafe_name,))
-    # Remove reports related to the cafe
     cursor.execute("DELETE FROM reports WHERE cafe_name = ?", (cafe_name,))
     conn.commit()
     conn.close()

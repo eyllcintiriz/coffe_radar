@@ -18,14 +18,17 @@ def favorite_cafes_page():
             with col1:
                 # Remove favorite button with icon
                 if st.button("🗑️", key=f"remove_{idx}"):
-                    remove_favorite_cafe(user_id, cafe_json['id'])
+                    remove_favorite_cafe(user_id, cafe_json.get('id', cafe[2]))  # Use integer index to access tuple element
                     st.success(f"Removed {cafe_json['name']} from favorites!")
                     time.sleep(2)
                     st.rerun()
 
             with col2:
                 # Cafe image
-                st.image(cafe_json.get('image_url', 'https://via.placeholder.com/100'), width=100)
+                if cafe_json.get('image_url'):
+                    st.image(cafe_json['image_url'], width=200)
+                else:
+                    st.image("https://via.placeholder.com/200", width=200)
 
             with col3:
                 cafe_name = cafe_json['name']
@@ -34,7 +37,10 @@ def favorite_cafes_page():
                     st.session_state['page'] = 'Cafe Details'
                     st.rerun()
                 st.write(f"Rating: {cafe_json.get('rating', 'N/A')} ⭐ ({cafe_json.get('review_count', 0)} reviews)")
-                st.write(f"Address: {', '.join(cafe_json['location']['display_address'])}")
+                if 'location' in cafe_json and 'display_address' in cafe_json['location']:
+                    st.write(f"Address: {', '.join(cafe_json['location']['display_address'])}")
+                else:
+                    st.write("Address: N/A")
                 st.write(f"Phone: {cafe_json.get('display_phone', 'N/A')}")
                 st.write("---")
     else:

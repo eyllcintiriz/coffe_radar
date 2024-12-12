@@ -11,20 +11,31 @@ def init_db():
             username TEXT UNIQUE,
             password TEXT,
             email TEXT,
-						phone TEXT,
-						address TEXT,
-						role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin'))
+            phone TEXT,
+            address TEXT,
+            role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin'))
         )
     """)
     
     
-    # Kafeler tablosu
+    # Cafes table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS cafes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE,
             location TEXT,
-            features TEXT
+            details TEXT
+        )
+    """)
+    
+    # Feedbacks table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS feedbacks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            feedback_text TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
     
@@ -57,7 +68,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS favorite_cafes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
-            cafe_id TEXT,
+            cafe_name TEXT,
             cafe_details TEXT,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
