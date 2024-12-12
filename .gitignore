@@ -1,0 +1,8 @@
+.vscode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.cache
+*.log
+__pycache__/admin_page.cpython-312.pyc
