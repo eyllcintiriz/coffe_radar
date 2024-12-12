@@ -64,10 +64,27 @@ def init_db():
     """)
     
 		# add a default admin user
+    #cursor.execute("""
+        #INSERT INTO users (username, password, role)
+		#		VALUES ('admin', 'admin', 'admin')
+    #""")
+
     cursor.execute("""
-        INSERT INTO users (username, password, role)
-				VALUES ('admin', 'admin', 'admin')
+    CREATE TABLE IF NOT EXISTS recommended_cafes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        cafe_name TEXT,
+        location TEXT,
+        description TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    )
     """)
+
+    cursor.execute("""
+        ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0
+    """)
+    
     
     conn.commit()
     conn.close()

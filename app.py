@@ -3,6 +3,7 @@ import streamlit as st
 from login_page import login_page
 from main_page import main_page
 from favorite_cafes import favorite_cafes_page
+from recommend_cafe_page import recommend_cafe_page
 from register_page import register_page
 from profile_helpers import profile_page
 from cafe_details import cafe_details_page
@@ -24,7 +25,8 @@ if st.session_state["logged_in"]:
     user_role = get_user_role(user_id)
 
     # Define the pages that should appear in the sidebar
-    sidebar_pages = ["Ana Sayfa", "Favori Kafeler", "Profil", "Geri Bildirim Gönderin"]
+    sidebar_pages = ["Ana Sayfa", "Favori Kafeler", "Profil", "Geri Bildirim Gönderin", "Kafe Önerin"]
+
     
     if user_role == "admin":
         sidebar_pages.append("Yönetici Sayfası")
@@ -65,6 +67,8 @@ if st.session_state["logged_in"]:
         cafe_details_page()
     elif st.session_state["page"] == "Yönetici Sayfası":
         admin_page()
+    elif st.session_state["page"] == "Kafe Önerin":
+        recommend_cafe_page()
     else:
         main_page()
 else:

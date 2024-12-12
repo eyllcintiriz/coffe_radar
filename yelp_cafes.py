@@ -3,6 +3,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import pydeck as pdk
+import math
 from db_helpers import get_user_id, is_cafe_in_favorites, add_favorite_cafe, add_report, add_review, get_reviews, calculate_rating
 import json
 
@@ -24,23 +25,65 @@ def fetch_cafes(latitude, longitude, term="cafe"):
 
 def display_cafes_on_map(latitude, longitude, location_name="your location"):
     data = fetch_cafes(latitude, longitude)
+    
     if "businesses" in data:
         cafes = data["businesses"]
         st.write(f"Found {len(cafes)} cafes near {location_name}")
 
-        # Create a DataFrame for the map
-        df = pd.DataFrame([{
+        # Create a DataFrame for the cafes
+        cafes_df = pd.DataFrame([{
             'name': cafe['name'],
             'lat': cafe['coordinates']['latitude'],
-            'lon': cafe['coordinates']['longitude']
+            'lon': cafe['coordinates']['longitude'],
+            'distance': cafe.get('distance', 0),
+            'rating': cafe.get('rating', 0),
+            'review_count': cafe.get('review_count', 0)
         } for cafe in cafes])
 
-        # Use the second version's styling of the map (pydeck)
-        layer = pdk.Layer(
+        # Create a DataFrame for the user's location
+        user_df = pd.DataFrame([{
+            'name': 'Your Location',
+            'lat': latitude,
+            'lon': longitude
+        }])
+
+        # Add sorting options
+        sort_option = st.selectbox("Sort cafes by:", ["Distance", "Rating", "Popularity"])
+        
+        # Perform sorting based on user's choice
+        # (Sorting code remains the same as your existing code)
+        if sort_option == "Distance":
+            cafes.sort(key=lambda x: x.get('distance', float('inf')))
+            metric = 'distance'
+        elif sort_option == "Rating":
+            cafes.sort(key=lambda x: x.get('rating', 0), reverse=True)
+            metric = 'rating'
+        elif sort_option == "Popularity":
+            cafes.sort(key=lambda x: x.get('review_count', 0), reverse=True)
+            metric = 'review_count'
+
+        # Normalize the metric values for color mapping (same as before)
+        min_metric = cafes_df[metric].min()
+        max_metric = cafes_df[metric].max()
+        range_metric = max_metric - min_metric if max_metric != min_metric else 1
+
+        def map_color(value):
+            normalized = int(255 * (value - min_metric) / range_metric)
+            if metric == 'distance':
+                return [normalized, 255 - normalized, 0, 160]
+            elif metric == 'rating':
+                return [255 - normalized, normalized, 0, 160]
+            elif metric == 'review_count':
+                return [0, normalized, 255 - normalized, 160]
+
+        cafes_df['color'] = cafes_df[metric].apply(map_color)
+
+       # Create layers for cafes and user location
+        cafes_layer = pdk.Layer(
             'ScatterplotLayer',
-            data=df,
+            data=cafes_df,
             get_position='[lon, lat]',
-            get_color='[200, 30, 0, 160]',
+            get_fill_color='color',
             get_radius=10,  
             radius_min_pixels=10,  
             radius_max_pixels=300,  
@@ -48,18 +91,19 @@ def display_cafes_on_map(latitude, longitude, location_name="your location"):
             auto_highlight=True,
         )
 
-        text_layer = pdk.Layer(
-            "TextLayer",
-            data=df,
+        user_layer = pdk.Layer(
+            'ScatterplotLayer',
+            data=user_df,
             get_position='[lon, lat]',
-            get_text='name',
-            get_size=20,
-            get_color=[0, 0, 0],
-            get_angle=0,
-            get_text_anchor='middle',
-            get_alignment_baseline='center'
+            get_fill_color='[0, 0, 255, 200]',  # Blue color for user location
+            get_radius=10,           # Slightly larger radius for user location
+            radius_min_pixels=10,
+            radius_max_pixels=300,
+            radius_units='meters',
+            pickable=False,
         )
 
+        # Create the deck.gl map
         view_state = pdk.ViewState(
             latitude=latitude,
             longitude=longitude,
@@ -67,10 +111,17 @@ def display_cafes_on_map(latitude, longitude, location_name="your location"):
             pitch=50,
         )
 
+        # Use a dark map style
         r = pdk.Deck(
-            layers=[layer, text_layer],
+            map_style='mapbox://styles/mapbox/dark-v9',  # Dark theme
             initial_view_state=view_state,
-            tooltip={"text": "{name}"}
+            layers=[cafes_layer, user_layer],
+            tooltip={
+                'html': '<b>{name}</b><br>{' + metric + '}',
+                'style': {
+                    'color': 'white'
+                }
+            }
         )
 
         st.pydeck_chart(r)
@@ -99,9 +150,9 @@ def display_cafes_on_map(latitude, longitude, location_name="your location"):
             with col1:
                 # Keep the cafe photo from the first version
                 if cafe.get('image_url'):
-                    st.image(cafe['image_url'], width=100)
+                    st.image(cafe['image_url'], width=200)
                 else:
-                    st.image("https://via.placeholder.com/100", width=100)
+                    st.image("https://via.placeholder.com/200", width=200)
 
             with col2:
                 # Cafe name as a button (first version logic)
@@ -114,6 +165,16 @@ def display_cafes_on_map(latitude, longitude, location_name="your location"):
                 st.write(f"Rating: {rating} ⭐ ({review_count} review(s))")
                 st.write(f"Address: {', '.join(cafe['location']['display_address'])}")
                 st.write(f"Phone: {cafe.get('display_phone', 'N/A')}")
+                
+                if sort_option == "Distance":
+                    for cafe in cafes:
+                        if 'distance' not in cafe:
+                            cafe_lat = cafe['coordinates']['latitude']
+                            cafe_lon = cafe['coordinates']['longitude']
+                            cafe['distance'] = calculate_distance(latitude, longitude, cafe_lat, cafe_lon)
+                    cafes.sort(key=lambda x: x.get('distance', float('inf')))
+                elif sort_option == "Popularity":
+                    st.write(f"Review Count: {cafe.get('review_count', 0)}")
 
                 # Add a small divider
                 st.markdown("---")
@@ -198,3 +259,12 @@ def display_cafes_on_map(latitude, longitude, location_name="your location"):
                 st.rerun()
     else:
         st.error("No cafes found or an error occurred.")
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    R = 6371  # Earth's radius in kilometers
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distance = R * c
+    return distance * 1000  # Return distance in meters

@@ -1,5 +1,5 @@
 import streamlit as st
-from db_helpers import get_reviews, remove_review, get_cafes, remove_cafe, get_reports, remove_report
+from db_helpers import accept_recommended_cafe, get_recommended_cafes, get_reviews, remove_recommended_cafe, remove_review, get_cafes, remove_cafe, get_reports, remove_report
 
 def admin_page():
     st.title("Admin Interface")
@@ -60,6 +60,32 @@ def admin_page():
                 remove_cafe(cafe_name)
                 remove_report(report_id)
                 st.success(f"Cafe '{cafe_name}' removed.")
+                st.rerun()
+
+        st.markdown("---")
+
+        # Section for managing recommended cafes
+    st.subheader("Manage Recommended Cafes")
+    recommended_cafes = get_recommended_cafes()
+    for recommendation in recommended_cafes:
+        recommendation_id, username, cafe_name, location, description, timestamp = recommendation
+        st.write(f"**Recommendation ID**: {recommendation_id}")
+        st.write(f"**Recommended by**: {username}")
+        st.write(f"**Cafe Name**: {cafe_name}")
+        st.write(f"**Location**: {location}")
+        st.write(f"**Description**: {description}")
+        st.write(f"**Timestamp**: {timestamp}")
+
+        cols = st.columns([1, 1, 4])
+        with cols[0]:
+            if st.button("Accept", key=f"accept_{recommendation_id}"):
+                accept_recommended_cafe(recommendation_id)
+                st.success(f"Cafe '{cafe_name}' has been accepted and added to the database.")
+                st.rerun()
+        with cols[1]:
+            if st.button("Reject", key=f"reject_{recommendation_id}"):
+                remove_recommended_cafe(recommendation_id)
+                st.info(f"Recommendation '{cafe_name}' has been rejected.")
                 st.rerun()
 
         st.markdown("---")

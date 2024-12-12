@@ -184,6 +184,10 @@ def add_review(user_id, cafe_name, review, rating):
     
     cursor.execute("INSERT INTO reviews (user_id, cafe_name, review, rating) VALUES (?, ?, ?, ?)", 
                    (user_id, cafe_name, review, rating))
+    
+    # Increment the user's points by a fixed amount (e.g., 10 points per review)
+    cursor.execute("UPDATE users SET points = points + 10 WHERE id = ?", (user_id,))
+    
     conn.commit()
     conn.close()
     return True, "Review submitted successfully."
@@ -273,3 +277,48 @@ def get_user_role(user_id):
     row = cursor.fetchone()
     conn.close()
     return row[0] if row else "user"
+
+def submit_recommended_cafe(user_id, cafe_name, location, description):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO recommended_cafes (user_id, cafe_name, location, description)
+        VALUES (?, ?, ?, ?)
+    """, (user_id, cafe_name, location, description))
+    conn.commit()
+    conn.close()
+
+def get_recommended_cafes():
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT recommended_cafes.id, users.username, recommended_cafes.cafe_name,
+               recommended_cafes.location, recommended_cafes.description, recommended_cafes.timestamp
+        FROM recommended_cafes
+        JOIN users ON recommended_cafes.user_id = users.id
+    """)
+    cafes = cursor.fetchall()
+    conn.close()
+    return cafes
+
+def remove_recommended_cafe(recommendation_id):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM recommended_cafes WHERE id = ?", (recommendation_id,))
+    conn.commit()
+    conn.close()
+
+def accept_recommended_cafe(recommendation_id):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    # Get the recommended cafe details
+    cursor.execute("SELECT cafe_name, location FROM recommended_cafes WHERE id = ?", (recommendation_id,))
+    cafe = cursor.fetchone()
+    if cafe:
+        cafe_name, location = cafe
+        # Add to cafes table
+        cursor.execute("INSERT INTO cafes (name, location, features) VALUES (?, ?, '')", (cafe_name, location))
+        # Remove from recommended_cafes table
+        cursor.execute("DELETE FROM recommended_cafes WHERE id = ?", (recommendation_id,))
+        conn.commit()
+    conn.close()
