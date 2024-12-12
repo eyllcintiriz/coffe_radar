@@ -75,9 +75,11 @@ def main_page():
         # Use geocoding to get latitude and longitude from location
         geocode_url = f"https://nominatim.openstreetmap.org/search?format=json&q={location}"
         headers = {'User-Agent': 'CoffeeRadar/1.0 (your_email@example.com)'}
-        response = requests.get(geocode_url, headers=headers)
+        # response = requests.get(geocode_url, headers=headers)
+        response = [{'lat': '0', 'lon': '0'}]  # Mock response for testing
         if response.status_code == 200:
-            geocode_data = response.json()
+            # geocode_data = response.json()
+            geocode_data = response
             if geocode_data:
                 latitude = float(geocode_data[0]['lat'])
                 longitude = float(geocode_data[0]['lon'])

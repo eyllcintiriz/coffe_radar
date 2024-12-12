@@ -8,19 +8,17 @@ def login_page():
         username = st.text_input("Kullanıcı Adı")
         password = st.text_input("Şifre", type="password")
         submit_button = st.form_submit_button("Giriş Yap")
+    st.write("[Şifremi Unuttum](http://yourdomain.com/forgot_password)")
     if submit_button:
         user = authenticate(username, password)
-        if user or (username == "admin" and password == "admin_password"):  # Check for admin credentials
-            st.session_state["logged_in"] = True
-            st.session_state["username"] = username
-            st.success(f"Merhaba, {username}! Yönlendiriliyorsunuz...")
-            time.sleep(1)
-            st.rerun()
+        if user:
+            if user[4]:  # Assuming email_verified is at index 4
+                st.session_state["logged_in"] = True
+                st.session_state["username"] = username
+                st.success(f"Merhaba, {username}! Yönlendiriliyorsunuz...")
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.error("Lütfen email adresinizi doğrulayın.")
         else:
-            # Hata mesajı için placeholder oluştur
-            error_placeholder = st.empty()
-            error_placeholder.error("Kullanıcı adı veya şifre hatalı!")
-            # Belirli bir süre bekle
-            time.sleep(3)
-            # Hata mesajını kaldır
-            error_placeholder.empty()
+            st.error("Kullanıcı adı veya şifre hatalı!")

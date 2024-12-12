@@ -4,6 +4,30 @@ def init_db():
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
     
+
+    # Attempt to add new columns to the users table
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN email TEXT UNIQUE")
+    except sqlite3.OperationalError:
+        pass  # The email column already exists
+
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # The email_verified column already exists
+
+
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT,
+            email TEXT UNIQUE,
+            email_verified INTEGER DEFAULT 0
+        )
+    """)
+
     # Kullanıcı tablosu
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -55,6 +79,15 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id),
             FOREIGN KEY (cafe_name) REFERENCES cafes (name)
+        )
+    """)
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS password_reset (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            token TEXT,
+            FOREIGN KEY (username) REFERENCES users (username)
         )
     """)
     

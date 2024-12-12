@@ -1,4 +1,7 @@
 import sqlite3
+import secrets
+import smtplib
+from email.mime.text import MIMEText
 
 # Kullanıcı doğrulama
 def authenticate(username, password):
@@ -10,16 +13,16 @@ def authenticate(username, password):
     return user
 
 # Kullanıcı kaydı
-def register_user(username, password):
+def register_user(username, email, password):
     try:
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", (username, email, password))
         conn.commit()
         conn.close()
         return True, "Kayıt başarılı!"
     except sqlite3.IntegrityError:
-        return False, "Bu kullanıcı adı zaten alınmış!"
+        return False, "Kullanıcı adı veya email zaten alınmış!"
 
 # Kullanıcı ID'sini al
 def get_user_id(username):
@@ -159,3 +162,49 @@ def remove_report(report_id):
     cursor.execute("DELETE FROM reports WHERE id = ?", (report_id,))
     conn.commit()
     conn.close()
+
+
+def send_verification_email(email, username):
+    token = secrets.token_urlsafe(16)
+    # Store token in the database
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO email_verification (username, token) VALUES (?, ?)", (username, token))
+    conn.commit()
+    conn.close()
+
+    # Compose the email
+    verification_link = f"http://yourdomain.com/verify?token={token}"
+    msg = MIMEText(f"Merhaba {username},\nLütfen email adresinizi doğrulamak için aşağıdaki linke tıklayın:\n{verification_link}")
+    msg['Subject'] = 'Email Doğrulama'
+    msg['From'] = 'noreply@yourdomain.com'
+    msg['To'] = email
+
+    # Send the email
+    with smtplib.SMTP('smtp.your-email-provider.com', 587) as server:
+        server.starttls()
+        server.login('your-email@yourdomain.com', 'your-email-password')
+        server.send_message(msg)
+
+
+def send_password_reset_email(email, username):
+    token = secrets.token_urlsafe(16)
+    # Store token in the database
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO password_reset (username, token) VALUES (?, ?)", (username, token))
+    conn.commit()
+    conn.close()
+
+    # Compose the email
+    reset_link = f"http://yourdomain.com/reset_password?token={token}"
+    msg = MIMEText(f"Merhaba {username},\nŞifrenizi sıfırlamak için aşağıdaki linke tıklayın:\n{reset_link}")
+    msg['Subject'] = 'Şifre Sıfırlama'
+    msg['From'] = 'noreply@yourdomain.com'
+    msg['To'] = email
+
+    # Send the email
+    with smtplib.SMTP('smtp.your-email-provider.com', 587) as server:
+        server.starttls()
+        server.login('your-email@yourdomain.com', 'your-email-password')
+        server.send_message(msg)

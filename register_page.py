@@ -6,6 +6,7 @@ def register_page():
     st.title("Kayıt Ol")
     with st.form(key='register_form'):
         username = st.text_input("Kullanıcı Adı")
+        email = st.text_input("Email")
         password = st.text_input("Şifre", type="password")
         confirm_password = st.text_input("Şifreyi Onayla", type="password")
         submit_button = st.form_submit_button("Kayıt Ol")
@@ -15,7 +16,7 @@ def register_page():
         elif not username or not password:
             st.error("Kullanıcı adı ve şifre gerekli!")
         else:
-            success, message = register_user(username, password)
+            success, message = register_user(username, email, password)
             if success:
                 # Mesajları göstermek için bir placeholder oluşturuyoruz
                 placeholder = st.empty()

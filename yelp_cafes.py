@@ -20,11 +20,23 @@ def fetch_cafes(latitude, longitude, term="cafe"):
         "longitude": longitude,
         "limit": 50
     }
-    response = requests.get(url, headers=headers, params=params)
+    #response = requests.get(url, headers=headers, params=params)
+    response = {'businesses': [ {
+        'name': 'Mock Cafe',
+            'location': {'address1': '123 Mock Street', 'display_address': ['123 Mock Street', 'Mock City', 'Mock Country']},
+            'coordinates': {
+                    'latitude': 40.7128,
+                    'longitude': -74.0060
+                },
+            'rating': 4.5,
+    },
     
+    ]} # Dummy response for testing
+    
+    cafes = response.get('businesses', [])
 
-
-    cafes = response.json().get("businesses", [])
+    # response = requests.get(geocode_url, headers=headers)
+    response = [{'lat': '0', 'lon': '0'}]  # Mock response for testing
 
     # Store fetched cafes in the database
     conn = sqlite3.connect("users.db")
