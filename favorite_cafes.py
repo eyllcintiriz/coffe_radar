@@ -25,7 +25,10 @@ def favorite_cafes_page():
 
             with col2:
                 # Cafe image
-                st.image(cafe_json.get('image_url', 'https://via.placeholder.com/100'), width=100)
+                if cafe_json.get('image_url'):
+                    st.image(cafe_json['image_url'], width=200)
+                else:
+                    st.image("https://via.placeholder.com/200", width=200)
 
             with col3:
                 cafe_name = cafe_json['name']

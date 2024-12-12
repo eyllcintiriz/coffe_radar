@@ -4,7 +4,7 @@ from login_page import login_page
 from main_page import main_page
 from favorite_cafes import favorite_cafes_page
 from register_page import register_page
-from profile_helpers import profile_page
+from profile_page import profile_page
 from cafe_details import cafe_details_page
 from feedback_page import feedback_page
 from admin_page import admin_page

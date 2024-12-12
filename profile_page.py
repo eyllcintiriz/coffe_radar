@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+from db_helpers import get_user_id, get_user_reviews
 
 # Kullanıcı bilgilerini getir
 def get_user_profile(username):
@@ -47,3 +48,28 @@ def profile_page():
         
         update_user_profile(username, updated_email, updated_phone, updated_address)
         st.success("Bilgiler başarıyla güncellendi!")
+        
+    # Kullanıcının yaptığı yorumların listesi
+    user_id = get_user_id(username)
+    reviews = get_user_reviews(user_id)
+    # Display user reviews
+    st.subheader(f"Yorumlarınız ({len(reviews)})")
+
+    if not reviews:
+        st.info("Hiçbir yorumda bulunmamışsınız.")
+    else:
+        num_columns = 2  # Number of reviews per row
+        cols = st.columns(num_columns)
+        
+        for index, review in enumerate(reviews):
+            cafe_name = review[0]
+            review_text = review[1]
+            rating = review[2]
+            
+            col = cols[index % num_columns]
+            with col:
+                st.markdown(f"**{cafe_name}**")
+                st.write(f"Puan: {rating} ⭐")
+                st.write(f"Yorum: {review_text}")
+                st.write("---")
+    
