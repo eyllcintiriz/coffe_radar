@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 import pydeck as pdk
 import math
-from src.utils.db_helpers import get_user_id, is_cafe_in_favorites, add_favorite_cafe, add_report, add_review, calculate_rating, remove_favorite_cafe
+from src.utils.db_helpers import get_user_id, is_cafe_in_favorites, add_favorite_cafe, add_report, add_review, calculate_rating, remove_favorite_cafe, add_cafe, get_cafes
 import json
 
 API_KEY = 'SrpDGlkbBf5SaTBTk4rBv2HiPdFC4SZwITVQVorbj6cN0g3Z_tB1k1pWPFZqPoUuKu_yX1b7F3-K6uoe-lc6s5Y4iyek4e4oG3HPmi_DyXOmZK-tK3EBBQCvPLJQZ3Yx'
@@ -23,14 +23,21 @@ def fetch_cafes(latitude=None, longitude=None, term="cafe"):
     return response
 
 def display_cafes_on_map(latitude, longitude, location_name="Konumunuz", key_prefix="map_"):
-    data = fetch_cafes(latitude, longitude)
-
-    if "businesses" not in data or not data["businesses"]:
-        st.error("Hiçbir kafe bulunamadı ya da bir hata oluştu.")
-        return
-
-    cafes = data["businesses"]
-    st.write(f"{location_name} civarında {len(cafes)} kafe bulundu.")
+    if len(get_cafes()) > 0:
+        cafes = get_cafes()
+        st.write(f"{location_name} civarında {len(cafes)} kafe bulundu.")
+    else:
+        data = fetch_cafes(latitude, longitude)
+        if "businesses" in data:
+            cafes = data["businesses"]
+            for cafe in cafes:
+                print(cafe['name'], cafe['location']['address1'])
+                add_cafe(cafe['name'], cafe['location']['address1'], json.dumps(cafe))
+            st.write(f"{location_name} civarında {len(cafes)} kafe bulundu.")
+        else:
+            cafes = []
+            st.error("Kafe bulunamadı.")
+            return
 
     # Include categories
     cafes_df = pd.DataFrame([{
@@ -52,6 +59,9 @@ def display_cafes_on_map(latitude, longitude, location_name="Konumunuz", key_pre
     sort_option = st.selectbox("Kafeleri sırala:", ["Distance", "Rating", "Popularity"], key=f"sort_{key_prefix}{latitude}_{longitude}")
     cafes_df = sort_cafes_df(cafes_df, sort_option)
     st.session_state[f"{key_prefix}cafes_df"] = cafes_df
+
+
+
 
     metric = sort_option.lower()
     if metric == "popularity":
