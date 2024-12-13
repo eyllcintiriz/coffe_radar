@@ -1,6 +1,6 @@
 # feedback_page.py
 import streamlit as st
-from db_helpers import get_user_id, submit_feedback
+from src.utils.db_helpers import get_user_id, submit_feedback
 
 def feedback_page():
     st.title("Geri Bildirim Gönderin")

@@ -132,7 +132,7 @@ def add_review(user_id, cafe_name, review, rating):
     
     if existing_review:
         conn.close()
-        return False, "You have already reviewed this cafe."
+        return False, "Bu kafeye ait bir yorumunuz zaten var."
     
     cursor.execute("INSERT INTO reviews (user_id, cafe_name, review, rating) VALUES (?, ?, ?, ?)", 
                    (user_id, cafe_name, review, rating))
@@ -142,7 +142,7 @@ def add_review(user_id, cafe_name, review, rating):
     
     conn.commit()
     conn.close()
-    return True, "Review submitted successfully."
+    return True, "Yorumunuz başarıyla gönderildi."
 
 def get_reviews(cafe_name):
     conn = sqlite3.connect("users.db")
@@ -219,7 +219,7 @@ def calculate_rating(yelp_cafe_rating, yelp_cafe_rating_count, cafe_name):
 		cursor.execute("SELECT AVG(rating), COUNT(*) FROM reviews WHERE cafe_name = ?", (cafe_name,))
 		db_rating, db_rating_count = cursor.fetchone()
 		conn.close()
-		
+		print(db_rating, db_rating_count)
 		if db_rating is None:
 				return yelp_cafe_rating, yelp_cafe_rating_count
 		else:
@@ -278,3 +278,94 @@ def accept_recommended_cafe(recommendation_id):
         cursor.execute("DELETE FROM recommended_cafes WHERE id = ?", (recommendation_id,))
         conn.commit()
     conn.close()
+    
+def init_db_schema(conn):    
+    cursor = conn.cursor()
+
+    cursor.execute("DROP TABLE IF EXISTS users;")
+    cursor.execute("DROP TABLE IF EXISTS cafes;")
+    cursor.execute("DROP TABLE IF EXISTS feedbacks;")
+    cursor.execute("DROP TABLE IF EXISTS reviews;")
+    cursor.execute("DROP TABLE IF EXISTS reports;")
+    cursor.execute("DROP TABLE IF EXISTS favorite_cafes;")
+    cursor.execute("DROP TABLE IF EXISTS recommended_cafes;")
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        email TEXT,
+        phone TEXT,
+        address TEXT,
+        role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+        points INTEGER DEFAULT 0
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS cafes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE,
+        location TEXT,
+        details TEXT
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS feedbacks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        feedback_text TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        cafe_name TEXT,
+        review TEXT,
+        rating INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        cafe_name TEXT,
+        reason TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS favorite_cafes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        cafe_name TEXT,
+        cafe_details TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS recommended_cafes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        cafe_name TEXT,
+        location TEXT,
+        description TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    );
+    """)
+
+    # Insert a default admin user for tests
+    cursor.execute("INSERT INTO users (username, password, role) VALUES ('admin', 'admin', 'admin');")
+    conn.commit()

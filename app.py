@@ -1,15 +1,15 @@
-# app.py
 import streamlit as st
-from login_page import login_page
-from main_page import main_page
-from favorite_cafes import favorite_cafes_page
-from recommend_cafe_page import recommend_cafe_page
-from register_page import register_page
-from profile_page import profile_page
-from cafe_details import cafe_details_page
-from feedback_page import feedback_page
-from admin_page import admin_page
-from db_helpers import get_user_id, get_user_role
+from src.pages.login_page import login_page
+from src.pages.main_page import main_page
+from src.pages.favorite_cafes import favorite_cafes_page
+from src.pages.recommend_cafe_page import recommend_cafe_page
+from src.pages.register_page import register_page
+from src.pages.profile_page import profile_page
+from src.pages.cafe_details import cafe_details_page
+from src.pages.feedback_page import feedback_page
+from src.pages.admin_page import admin_page
+from src.utils.db_helpers import get_user_id, get_user_role
+from src.pages.privacy_policy import privacy_policy_page, terms_of_service_page
 
 # Initialize session state
 if "logged_in" not in st.session_state:
@@ -25,7 +25,7 @@ if st.session_state["logged_in"]:
     user_role = get_user_role(user_id)
 
     # Define the pages that should appear in the sidebar
-    sidebar_pages = ["Ana Sayfa", "Favori Kafeler", "Profil", "Geri Bildirim Gönderin", "Kafe Önerin"]
+    sidebar_pages = ["Ana Sayfa", "Favori Kafeler", "Profil", "Geri Bildirim Gönderin", "Kafe Önerin", "Gizlilik Sözleşmesi", "Hizmet Şartları"]
 
     
     if user_role == "admin":
@@ -65,10 +65,14 @@ if st.session_state["logged_in"]:
         feedback_page()
     elif st.session_state["page"] == "Kafe Detayları":
         cafe_details_page()
-    elif st.session_state["page"] == "Yönetici Sayfası":
-        admin_page()
+    elif st.session_state["page"] == "Gizlilik Sözleşmesi":
+        privacy_policy_page()
+    elif st.session_state["page"] == "Hizmet Şartları":
+        terms_of_service_page()
     elif st.session_state["page"] == "Kafe Önerin":
         recommend_cafe_page()
+    elif st.session_state["page"] == "Yönetici Sayfası":
+        admin_page()
     else:
         main_page()
 else:

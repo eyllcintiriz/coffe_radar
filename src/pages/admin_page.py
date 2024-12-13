@@ -1,7 +1,6 @@
-import time
 import streamlit as st
-from db_helpers import accept_recommended_cafe, get_recommended_cafes, get_reviews, remove_recommended_cafe, remove_review, get_cafes, remove_cafe, get_reports, remove_report
-from db_helpers import get_reviews, remove_review, get_cafes, remove_cafe, get_reports, remove_report, get_feedbacks, remove_feedback, get_users, promote_user, demote_user
+from src.utils.db_helpers import accept_recommended_cafe, get_recommended_cafes, get_reviews, remove_recommended_cafe, remove_review, get_cafes, remove_cafe, get_reports, remove_report
+from src.utils.db_helpers import get_reviews, remove_review, get_cafes, remove_cafe, get_reports, remove_report, get_feedbacks, remove_feedback, get_users, promote_user, demote_user
 
 def admin_page():
     st.title("Admin Interface")

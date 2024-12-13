@@ -1,7 +1,7 @@
 import sqlite3
 
 def init_db():
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("../../users.db")
     cursor = conn.cursor()
     
     # Kullanıcı tablosu
@@ -75,10 +75,10 @@ def init_db():
     """)
     
 		# add a default admin user
-    #cursor.execute("""
-        #INSERT INTO users (username, password, role)
-		#		VALUES ('admin', 'admin', 'admin')
-    #""")
+    cursor.execute("""
+        INSERT INTO users (username, password, role)
+				VALUES ('admin', 'admin', 'admin')
+    """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS recommended_cafes (

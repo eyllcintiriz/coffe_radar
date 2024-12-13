@@ -1,6 +1,6 @@
 import streamlit as st
 import sqlite3
-from db_helpers import get_user_id, get_user_reviews
+from src.utils.db_helpers import get_user_id, get_user_reviews
 
 # Kullanıcı bilgilerini getir
 def get_user_profile(username):
