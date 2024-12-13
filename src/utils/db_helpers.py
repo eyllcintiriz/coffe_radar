@@ -219,7 +219,6 @@ def calculate_rating(yelp_cafe_rating, yelp_cafe_rating_count, cafe_name):
 		cursor.execute("SELECT AVG(rating), COUNT(*) FROM reviews WHERE cafe_name = ?", (cafe_name,))
 		db_rating, db_rating_count = cursor.fetchone()
 		conn.close()
-		print(db_rating, db_rating_count)
 		if db_rating is None:
 				return yelp_cafe_rating, yelp_cafe_rating_count
 		else:
