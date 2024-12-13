@@ -31,7 +31,6 @@ def display_cafes_on_map(latitude, longitude, location_name="Konumunuz", key_pre
         if "businesses" in data:
             cafes = data["businesses"]
             for cafe in cafes:
-                print(cafe['name'], cafe['location']['address1'])
                 add_cafe(cafe['name'], cafe['location']['address1'], json.dumps(cafe))
             st.write(f"{location_name} civarında {len(cafes)} kafe bulundu.")
         else:
